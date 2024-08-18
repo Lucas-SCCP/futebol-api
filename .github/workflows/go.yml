@@ -28,5 +28,6 @@ jobs:
       run: |
         echo "$SSH_PRIVATE_KEY" > private_key.pem
         chmod 600 private_key.pem
+        ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
         scp -i private_key.pem futebol-api $SERVER_USER@$SERVER_HOST:$SERVER_PATH
         ssh -i private_key.pem $SERVER_USER@$SERVER_HOST 'sudo systemctl restart futebol-api'
