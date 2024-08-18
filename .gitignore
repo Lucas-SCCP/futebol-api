@@ -1,0 +1,9 @@
+vendor/
+*.exe
+*.exe~
+*.dll
+*.so
+build/
+dist/
+tmp/
+cache/
