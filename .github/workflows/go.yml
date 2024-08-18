@@ -26,5 +26,7 @@ jobs:
         SERVER_HOST: ${{ secrets.SERVER_HOST }}
         SERVER_PATH: ${{ secrets.SERVER_PATH }}
       run: |
-        scp -i $SSH_PRIVATE_KEY futebol-api $SERVER_USER@$SERVER_HOST:$SERVER_PATH
-        ssh -i @SSH_PRIVATE_KEY $SERVER_USER@$SERVER_HOST 'sudo systemctl restart futebol-api'
+        echo "$SSH_PRIVATE_KEY" > private_key.pem
+        chmod 600 private_key.pem
+        scp -i private_key.pem futebol-api $SERVER_USER@$SERVER_HOST:$SERVER_PATH
+        ssh -i private_key.pem $SERVER_USER@$SERVER_HOST 'sudo systemctl restart futebol-api'
