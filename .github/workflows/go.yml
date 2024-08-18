@@ -26,5 +26,5 @@ jobs:
         SERVER_HOST: ${{ secrets.SERVER_HOST }}
         SERVER_PATH: ${{ secrets.SERVER_PATH }}
       run: |
-        scp -h $SSH_PRIVATE_KEY futebol-api $SERVER_USER@$SERVER_HOST:$SERVER_PATH
+        scp -i $SSH_PRIVATE_KEY futebol-api $SERVER_USER@$SERVER_HOST:$SERVER_PATH
         ssh -i @SSH_PRIVATE_KEY $SERVER_USER@$SERVER_HOST 'sudo systemctl restart futebol-api'
