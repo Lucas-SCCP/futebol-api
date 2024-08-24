@@ -32,8 +32,8 @@ type Match struct {
 	Scoreboard_Principal           int       `json:"scoreboard_principal"`
 	Scoreboard_Principal_Penalties int       `json:"scoreboard_principal_penalties"`
 	Team_Visitor                   string    `json:"team_visitor"`
-	Scoreboard_Visitor             int       `json:"team_visitor"`
-	Scoreboard_Visitor_Penalties   int       `json:"team_visitor_penalties"`
+	Scoreboard_Visitor             int       `json:"scoreboard_visitor"`
+	Scoreboard_Visitor_Penalties   int       `json:"scoreboard_visitor_penalties"`
 }
 
 func teamHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
