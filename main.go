@@ -48,7 +48,7 @@ func teamHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	query := "SELECT full_name, name, surname, acronym FROM team WHERE id = ?"
+	query := "SELECT full_name, name, surname, acronym FROM teams WHERE id = ?"
 	row := db.QueryRow(query, id)
 
 	var team Team
