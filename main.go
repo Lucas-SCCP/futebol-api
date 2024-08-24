@@ -13,6 +13,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Team struct {
@@ -130,6 +132,36 @@ func lastMatchPlayedHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) 
 	json.NewEncoder(w).Encode(lastMatchPlayed)
 }
 
+var httpRequestsTotal = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "http_requests_total",
+		Help: "Total number of HTTP requests",
+	},
+	[]string{"method", "status_code", "path"},
+)
+
+func init() {
+	prometheus.MustRegister(httpRequestsTotal)
+}
+
+func recordMetrics(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rw := &statusCapturingResponseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+		next.ServeHTTP(rw, r)
+		httpRequestsTotal.WithLabelValues(r.Method, fmt.Sprintf("%d", rw.statusCode), r.URL.Path).Inc()
+	})
+}
+
+type statusCapturingResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rw *statusCapturingResponseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -150,10 +182,11 @@ func main() {
 	defer db.Close()
 
 	if err := db.Ping(); err != nil {
-		panic(err)
+		log.Fatalf("Error pinging database: %v", err)
 	}
 
 	r := mux.NewRouter()
+	r.Handle("/metrics", promhttp.Handler())
 	r.HandleFunc("/team/{id}", func(w http.ResponseWriter, r *http.Request) {
 		teamHandler(w, r, db)
 	})
@@ -161,6 +194,8 @@ func main() {
 	r.HandleFunc("/team/{id}/lastMatchPlayed", func(w http.ResponseWriter, r *http.Request) {
 		lastMatchPlayedHandler(w, r, db)
 	})
+
+	r.Use(recordMetrics)
 
 	fmt.Println("Server is running")
 	if err := http.ListenAndServe(":8080", r); err != nil {
