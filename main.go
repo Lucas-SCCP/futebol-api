@@ -15,6 +15,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/cors"
 )
 
 type Team struct {
@@ -236,8 +237,17 @@ func main() {
 
 	r.Use(recordMetrics)
 
+	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{allowedOrigins},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Content-Type"},
+	})
+
+	handler := c.Handler(r)
+
 	fmt.Println("Server is running")
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	if err := http.ListenAndServe(":8080", handler); err != nil {
 		fmt.Printf("Error starting server: %s\n", err)
 	}
 }
