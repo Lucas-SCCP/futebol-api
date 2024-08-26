@@ -26,20 +26,48 @@ type Team struct {
 }
 
 type Match struct {
-	Id                             int       `json:"id"`
-	Championship                   string    `json:"championship"`
-	Stadium                        string    `json:"stadium"`
-	Data                           time.Time `json:"date"`
-	Team_Principal                 string    `json:"team_principal"`
-	Scoreboard_Principal           int       `json:"scoreboard_principal"`
-	Scoreboard_Principal_Penalties int       `json:"scoreboard_principal_penalties"`
-	Team_Visitor                   string    `json:"team_visitor"`
-	Scoreboard_Visitor             int       `json:"scoreboard_visitor"`
-	Scoreboard_Visitor_Penalties   int       `json:"scoreboard_visitor_penalties"`
+	Id                             int           `json:"id"`
+	Championship                   string        `json:"championship"`
+	Stadium                        string        `json:"stadium"`
+	Data                           time.Time     `json:"date"`
+	Team_Principal                 string        `json:"team_principal"`
+	Scoreboard_Principal           sql.NullInt64 `json:"scoreboard_principal"`
+	Scoreboard_Principal_Penalties sql.NullInt64 `json:"scoreboard_principal_penalties"`
+	Team_Visitor                   string        `json:"team_visitor"`
+	Scoreboard_Visitor             sql.NullInt64 `json:"scoreboard_visitor"`
+	Scoreboard_Visitor_Penalties   sql.NullInt64 `json:"scoreboard_visitor_penalties"`
+}
+
+func (m Match) ScoreboardPrincipalValue() int64 {
+	if m.Scoreboard_Principal.Valid {
+		return m.Scoreboard_Principal.Int64
+	}
+	return 0
+}
+
+func (m Match) ScoreboardPrincipalPenaltiesValue() int64 {
+	if m.Scoreboard_Principal_Penalties.Valid {
+		return m.Scoreboard_Principal_Penalties.Int64
+	}
+	return 0
+}
+
+func (m Match) ScoreboardVisitorValue() int64 {
+	if m.Scoreboard_Visitor.Valid {
+		return m.Scoreboard_Visitor.Int64
+	}
+	return 0
+}
+
+func (m Match) ScoreboardVisitorPenaltiesValue() int64 {
+	if m.Scoreboard_Visitor_Penalties.Valid {
+		return m.Scoreboard_Visitor_Penalties.Int64
+	}
+	return 0
 }
 
 func teamHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	w.Header().Set("Contenty-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 
 	vars := mux.Vars(r)
 	idStr := vars["id"]
@@ -68,7 +96,7 @@ func teamHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 }
 
 func lastMatchPlayedHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	w.Header().Set("Contenty-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 
 	vars := mux.Vars(r)
 	idTeamString := vars["id"]
@@ -129,7 +157,18 @@ func lastMatchPlayedHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) 
 		return
 	}
 
-	json.NewEncoder(w).Encode(lastMatchPlayed)
+	response := map[string]interface{}{
+		"date":                           lastMatchPlayed.Data.Format("2006-01-02 15:04:05"),
+		"championship":                   lastMatchPlayed.Championship,
+		"team_principal":                 lastMatchPlayed.Team_Principal,
+		"scoreboard_principal":           lastMatchPlayed.ScoreboardPrincipalValue(),
+		"scoreboard_principal_penalties": lastMatchPlayed.ScoreboardPrincipalPenaltiesValue(),
+		"team_visitor":                   lastMatchPlayed.Team_Visitor,
+		"scoreboard_visitor":             lastMatchPlayed.ScoreboardVisitorValue(),
+		"scoreboard_visitor_penalties":   lastMatchPlayed.ScoreboardVisitorPenaltiesValue(),
+	}
+
+	json.NewEncoder(w).Encode(response)
 }
 
 var httpRequestsTotal = prometheus.NewCounterVec(
