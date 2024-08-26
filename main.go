@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -238,8 +239,9 @@ func main() {
 	r.Use(recordMetrics)
 
 	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
+	origins := strings.Split(allowedOrigins, ",")
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{allowedOrigins},
+		AllowedOrigins: origins,
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{"Content-Type"},
 	})
